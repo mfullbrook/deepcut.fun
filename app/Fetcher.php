@@ -3,26 +3,32 @@
 namespace App;
 
 use Carbon\CarbonImmutable;
+use ErrorException;
 
 class Fetcher
 {
 
     public function update()
     {
-        $today = now();
-        $eow = now()->endOfWeek();
+        $today = new CarbonImmutable();
+        $eow = $today->endOfWeek();
 
         // update for current month
         $this->fetchAndUpsert($today);
 
-        if ($eow->monthName !== $today->monthName) {
-            $this->fetchAndUpsert($eow);
-        }
+        $nextMonth = $today->addMonth();
+        $this->fetchAndUpsert($nextMonth);
     }
 
     public function fetchAndUpsert($date)
     {
-        collect($this->fetch($date))
+        $data = $this->fetch($date);
+
+        if (count($data) === 0) {
+            return;
+        }
+
+        collect($data)
             ->eachSpread(function(CarbonImmutable $date, $isOpen) {
                 $model = AreaDate::query()->firstOrNew(['area' => 'g2', 'date' => $date]);
                 $model->is_open = $isOpen;
@@ -35,9 +41,11 @@ class Fetcher
         $month = strtolower($date->monthName);
         $url = 'https://www.gov.uk/government/publications/south-east-training-estate-firing-times/'
              . "aldershot-training-area-closure-times-{$month}-{$date->year}";
-
-        $table = html5qp($url, '#aldershot-training-area-g2 + table');
-//        $table = html5qp(storage_path('app/test.html'), '#aldershot-training-area-g2 + table');
+        try {
+            $table = html5qp($url, '#aldershot-training-area-g2 + table');
+        } catch (ErrorException $e) {
+            return [];
+        }
         $rows = $table->findInPlace('tbody > tr');
 
         $data = [];

@@ -54,7 +54,7 @@ class Fetcher
             $cells = $row->find('td');
             $data[] = [
                 $date->setDay($cells->get(0)->nodeValue),
-                $cells->get(1)->nodeValue === 'Open to Public'
+                preg_match("/\s*Open\s+to\s+Public/", $cells->get(1)->nodeValue) === 1
             ];
         }
 

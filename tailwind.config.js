@@ -8,9 +8,14 @@ module.exports = {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        nunito: ['var(--font-nunito)'],
+      },
   		colors: {
   			background: 'var(--background)',
-  			foreground: 'var(--foreground)'
+  			foreground: 'var(--foreground)',
+  			'electric-green': '#0de60d',
+  			'electric-red': '#fa2437'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

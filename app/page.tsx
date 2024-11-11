@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThumbsUp, Lock } from "lucide-react"
 import { Galindo } from 'next/font/google'
 import { motion } from "framer-motion"
+import { SiGithub } from "@icons-pack/react-simple-icons"
 
-const galindo = Galindo({ 
+
+const galindo = Galindo({
   weight: '400',
   subsets: ['latin'],
 })
@@ -58,16 +60,16 @@ const StatusIcon = ({ isOpen, className, size = "large" }: { isOpen: boolean; cl
   const sizeClass = size === "large" ? "h-12 w-12" : "h-5 w-5"
   return (
     <div className={`flex items-center justify-center ${className}`}>
-      <Icon className={`${sizeClass} ${isOpen ? "text-[#a3ff78]" : "text-red-500"}`} />
+      <Icon className={`${sizeClass} ${isOpen ? "text-electric-green" : "text-electric-red"}`} />
     </div>
   )
 }
 
 const OpeningTimes = ({ isOpen, opensAt, closesAt }: { isOpen: boolean; opensAt?: string; closesAt?: string }) => {
   if (!isOpen && opensAt && closesAt) {
-    return <span className="text-sm mt-2 text-[#a3ff78]">{opensAt} - {closesAt}</span>
+    return <span className="text-sm mt-2 text-electric-green">{opensAt} - {closesAt}</span>
   } else if (!isOpen && opensAt) {
-    return <span className="text-sm mt-2 text-[#a3ff78]">Opens at {opensAt}</span>
+    return <span className="text-sm mt-2 text-electric-green">Opens at {opensAt}</span>
   }
   return null
 }
@@ -101,22 +103,24 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a3200] text-[#a3ff78] p-6 font-sans">
+    <div className="min-h-screen bg-[#0a3200] text-electric-green p-6 font-sans">
       <header className="mb-8">
-        <h1 className={`${galindo.className} text-4xl font-bold text-center mb-2 text-white`}>Deepcut Trail Status</h1>
-        <p className="text-center text-[#a3ff78]">No artificial. No apologies.</p>
+        <h1 className={`${galindo.className} text-4xl tracking-wider font-bold text-center mb-2 text-white`}>
+          Deepcut Trail Status
+        </h1>
+        <p className="text-center font-semibold text-electric-green">MoD Data - Aldershot Training Area G2</p>
       </header>
       <main>
         <div className="grid grid-cols-2 gap-4 mb-8">
           {weekStatus.slice(0, 2).map((day, index) => (
-            <Card key={day.date} className={`bg-[#0f4700] border-2 ${day.isOpen ? "border-[#a3ff78]" : "border-red-500"}`}>
+            <Card key={day.date} className={`bg-[#0f4700] border-2 ${day.isOpen ? "border-electric-green" : "border-electric-red"}`}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl font-bold text-white">{getDayLabel(day.date, index)}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center h-32">
                   <StatusIcon isOpen={day.isOpen} className="mb-2" />
-                  <span className={`text-2xl font-bold ${day.isOpen ? "text-[#a3ff78]" : "text-red-500"}`}>
+                  <span className={`text-2xl font-bold ${day.isOpen ? "text-electric-green" : "text-electric-red"}`}>
                     {day.isOpen ? "Open" : "Closed"}
                   </span>
                   <OpeningTimes isOpen={day.isOpen} opensAt={day.opensAt} closesAt={day.closesAt} />
@@ -131,9 +135,9 @@ export default function Page() {
               key={day.date}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
+              transition={{ duration: 0.3, delay: Math.max(0, index-7) * 0.1 }}
             >
-              <Card className={`bg-[#0f4700] border ${day.isOpen ? "border-[#a3ff78]" : "border-red-500"}`}>
+              <Card className={`bg-[#0f4700] border ${day.isOpen ? "border-electric-green" : "border-electric-red"}`}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg text-white">{getDayLabel(day.date, index + 2)}</CardTitle>
                 </CardHeader>
@@ -141,7 +145,7 @@ export default function Page() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <StatusIcon isOpen={day.isOpen} size="small" />
-                      <span className={`font-semibold ${day.isOpen ? "text-[#a3ff78]" : "text-red-500"}`}>
+                      <span className={`font-semibold ${day.isOpen ? "text-electric-green" : "text-electric-red"}`}>
                         {day.isOpen ? "Open" : "Closed"}
                       </span>
                     </div>
@@ -163,6 +167,21 @@ export default function Page() {
           </div>
         )}
       </main>
+      <footer className="mt-8 text-center text-electric-green">
+          <p className="text-center space-x-1">
+            Made <em>(mostly with AI)</em> by
+            <a href="https://mark.fullbrook.me">Mark Fullbrook</a>
+
+            {/* <a
+              href="https://github.com/mfullbrook/deepcut.fun"
+              className="hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <SiGithub className="h-4 w-4" color="default" size={24} />
+            </a> */}
+          </p>
+      </footer>
     </div>
   )
 }

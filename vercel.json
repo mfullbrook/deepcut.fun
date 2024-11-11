@@ -1,6 +1,6 @@
 {
   "crons": [{
-    "path": "/api/fetch-aldershot",
+    "path": "/cron/fetch-aldershot",
     "schedule": "0 0 * * *"
   }]
-} 
+}

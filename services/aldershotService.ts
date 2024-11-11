@@ -1,9 +1,37 @@
 import * as cheerio from 'cheerio';
 
+interface MonthYear {
+  month: string;
+  year: number;
+}
+
+interface ClosureConditions {
+  raw: string | null;
+  opensAt: string | null;
+  closesAt: string | null;
+}
+
+interface TableDataEntry {
+  dateObject: Date;
+  year: number;
+  month: string;
+  date: string;
+  isOpen: boolean;
+  conditions: ClosureConditions | null;
+  rawText: string;
+}
+
+interface ClosureTimesResult {
+  month: string;
+  year: number;
+  closureTimesUrl: string;
+  tableData: TableDataEntry[];
+}
+
 const BASE_URL = 'https://www.gov.uk';
 const MAIN_URL = `${BASE_URL}/government/publications/south-east-training-estate-firing-times`;
 
-const getMonthYear = (monthsToAdd = 0) => {
+const getMonthYear = (monthsToAdd: number = 0): MonthYear => {
   const date = new Date();
   date.setMonth(date.getMonth() + monthsToAdd);
   return {
@@ -12,13 +40,13 @@ const getMonthYear = (monthsToAdd = 0) => {
   };
 };
 
-const fetchAndParse = async (url) => {
+const fetchAndParse = async (url: string): Promise<cheerio.CheerioAPI> => {
   const response = await fetch(url);
   const html = await response.text();
   return cheerio.load(html);
 };
 
-const findClosureTimesLink = ($, month, year) => {
+const findClosureTimesLink = ($: cheerio.CheerioAPI, month: string, year: number): string | null => {
   const targetText = `Aldershot Training Area closure times ${month} ${year}`;
   const link = $(`a:contains("${targetText}")`);
   
@@ -29,7 +57,7 @@ const findClosureTimesLink = ($, month, year) => {
   return BASE_URL + link.attr('href');
 };
 
-const parseTableData = ($, month, year, targetH2Id = 'aldershot-training-area-g2') => {
+const parseTableData = ($: cheerio.CheerioAPI, month: string, year: number, targetH2Id: string = 'aldershot-training-area-g2'): TableDataEntry[] | null => {
   const targetH2 = $(`h2#${targetH2Id}`);
   const table = targetH2.next('table');
   
@@ -37,7 +65,7 @@ const parseTableData = ($, month, year, targetH2Id = 'aldershot-training-area-g2
     return null;
   }
 
-  const tableData = [];
+  const tableData: TableDataEntry[] = [];
   table.find('tbody tr').each((_, row) => {
     const cells = $(row).find('td');
     const date = cells.eq(0).text().trim();
@@ -67,13 +95,13 @@ const parseTableData = ($, month, year, targetH2Id = 'aldershot-training-area-g2
   return tableData;
 };
 
-export const parseConditions = (isOpen, input) => {
+export const parseConditions = (isOpen: boolean, input: string | null): ClosureConditions => {
   if (isOpen && input) {
     throw new Error('Edge case found, isOpen=true with conditions');
   }
 
-  let opensAt = null;
-  let closesAt = null;
+  let opensAt: string | null = null;
+  let closesAt: string | null = null;
 
   if (!input) {
     return { raw: input, opensAt, closesAt };
@@ -102,17 +130,18 @@ export const parseConditions = (isOpen, input) => {
     opensAt = toMatch[1];
   }
 
-  const result = {
+  return {
     raw: input,
     opensAt,
     closesAt,
   };
-
-  return result;
 };
 
 class ClosureTimesError extends Error {
-  constructor(message, month, year) {
+  month: string;
+  year: number;
+
+  constructor(message: string, month: string, year: number) {
     super(message);
     this.name = 'ClosureTimesError';
     this.month = month;
@@ -120,7 +149,7 @@ class ClosureTimesError extends Error {
   }
 }
 
-const fetchClosureTimes = async (mainDoc, monthsAhead = 0) => {
+const fetchClosureTimes = async (mainDoc: cheerio.CheerioAPI, monthsAhead: number = 0): Promise<ClosureTimesResult> => {
   const { month, year } = getMonthYear(monthsAhead);
   
   // Find closure times link
@@ -146,31 +175,35 @@ const fetchClosureTimes = async (mainDoc, monthsAhead = 0) => {
   };
 };
 
-export const fetchAllClosureTimes = async () => {
-  let mainDoc;
+export const fetchAllClosureTimes = async (): Promise<ClosureTimesResult[]> => {
+  let mainDoc: cheerio.CheerioAPI;
   try {
     // Fetch and parse main page
     mainDoc = await fetchAndParse(MAIN_URL);
   } catch (error) {
-    throw error
-    throw new Error(`Failed to fetch main page: ${error.message}`);
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch main page: ${error.message}`);
+    }
+    throw error;
   }
 
-  let results = []
+  const results: ClosureTimesResult[] = [];
 
   for (let i = 0; i < 2; i++) {
     try {
       // Fetch closure time for a month
       const times = await fetchClosureTimes(mainDoc, i);
-      results.push(times)
+      results.push(times);
     } catch (error) {
       if (error instanceof ClosureTimesError) {
         console.log(`Notice: ${error.message} for ${error.month} ${error.year}`);
-      } else {
+      } else if (error instanceof Error) {
         throw new Error(`Failed to fetch closure times: ${error.message}`);
+      } else {
+        throw error;
       }
     }
   }
 
   return results;
-}; 
+};

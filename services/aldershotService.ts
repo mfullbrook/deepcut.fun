@@ -1,3 +1,4 @@
+import { ClosureConditions } from '@/lib/types';
 import * as cheerio from 'cheerio';
 
 interface MonthYear {
@@ -5,13 +6,7 @@ interface MonthYear {
   year: number;
 }
 
-interface ClosureConditions {
-  raw: string | null;
-  opensAt: string | null;
-  closesAt: string | null;
-}
-
-interface TableDataEntry {
+export interface TableDataEntry {
   dateObject: Date;
   year: number;
   month: string;
@@ -21,7 +16,7 @@ interface TableDataEntry {
   rawText: string;
 }
 
-interface ClosureTimesResult {
+export interface ClosureTimesResult {
   month: string;
   year: number;
   closureTimesUrl: string;
@@ -49,18 +44,18 @@ const fetchAndParse = async (url: string): Promise<cheerio.CheerioAPI> => {
 const findClosureTimesLink = ($: cheerio.CheerioAPI, month: string, year: number): string | null => {
   const targetText = `Aldershot Training Area closure times ${month} ${year}`;
   const link = $(`a:contains("${targetText}")`);
-  
+
   if (!link.length) {
     return null;
   }
-  
+
   return BASE_URL + link.attr('href');
 };
 
 const parseTableData = ($: cheerio.CheerioAPI, month: string, year: number, targetH2Id: string = 'aldershot-training-area-g2'): TableDataEntry[] | null => {
   const targetH2 = $(`h2#${targetH2Id}`);
   const table = targetH2.next('table');
-  
+
   if (!table.length) {
     return null;
   }
@@ -72,9 +67,9 @@ const parseTableData = ($: cheerio.CheerioAPI, month: string, year: number, targ
     const dateObject = new Date(`${year} ${month} ${date}`);
     let rawData = cells.eq(1).text().trim();
     rawData = rawData.replace(/\s{2,}/g, ' ');
-    
+
     const isOpen = rawData.toLowerCase().includes('open to public');
-    
+
     let conditions = null;
     const matchConditions = rawData.match(/\((.*?)\)/);
     if (matchConditions) {
@@ -151,22 +146,22 @@ class ClosureTimesError extends Error {
 
 const fetchClosureTimes = async (mainDoc: cheerio.CheerioAPI, monthsAhead: number = 0): Promise<ClosureTimesResult> => {
   const { month, year } = getMonthYear(monthsAhead);
-  
+
   // Find closure times link
   const closureTimesUrl = findClosureTimesLink(mainDoc, month, year);
   if (!closureTimesUrl) {
     throw new ClosureTimesError(`Closure times link not found`, month, year);
   }
-  
+
   // Fetch and parse closure times page
   const closureDoc = await fetchAndParse(closureTimesUrl);
-  
+
   // Extract table data
   const tableData = parseTableData(closureDoc, month, year);
   if (!tableData) {
     throw new ClosureTimesError(`Closure times table not found`, month, year);
   }
-  
+
   return {
     month,
     year,

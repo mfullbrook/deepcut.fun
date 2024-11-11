@@ -1,9 +1,10 @@
 import { put } from '@vercel/blob';
-import type { ClosureTimesResult, TableDataEntry, ClosureConditions } from './aldershotService';
+import type { ClosureTimesResult, TableDataEntry } from './aldershotService';
+import type { StoredClosureData, ClosureConditions } from '@/lib/types';
 
 interface ClosureDayData {
   isOpen: boolean;
-  conditions: ClosureConditions | null;
+  conditions: ClosureConditions;
   rawText: string;
 }
 
@@ -21,7 +22,7 @@ const formatDate = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
 
-const buildClosureData = (tableData: TableDataEntry[]): ClosureDict => {
+const filterAndKeyByDate = (tableData: TableDataEntry[]): ClosureDict => {
   // Get today's date at midnight for comparison
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -31,16 +32,11 @@ const buildClosureData = (tableData: TableDataEntry[]): ClosureDict => {
 
   tableData.forEach(row => {
     const rowDate = new Date(row.dateObject);
-    
+
     // Only include dates from today onwards
     if (rowDate >= today) {
       const formattedDate = formatDate(rowDate);
-      
-      closureDict[formattedDate] = {
-        isOpen: row.isOpen,
-        conditions: row.conditions,
-        rawText: row.rawText
-      };
+      closureDict[formattedDate] = row;
     }
   });
 
@@ -55,10 +51,14 @@ export const storeClosureTimes = async (data: ClosureTimesResult[]): Promise<Sto
     }, []);
 
     // 2 & 3. Build dictionary of future dates
-    const closureDict = buildClosureData(allTableData);
+    const payload: StoredClosureData = {
+        retrievedAt: new Date().toISOString(),
+        data: filterAndKeyByDate(allTableData)
+    };
 
     // 4. Convert to JSON string
-    const jsonData = JSON.stringify(closureDict, null, 2);
+    const jsonData = JSON.stringify(payload, null, 2);
+
 
     // 5. Store in Vercel Blob
     const { url } = await put('aldershotTrainingAreaData.json', jsonData, {

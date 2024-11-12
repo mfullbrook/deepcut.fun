@@ -18,8 +18,8 @@ const galindo = Galindo({
 type DayStatus = {
   date: string
   isOpen: boolean
-  opensAt: string | null
-  closesAt: string | null
+  opensAt?: string
+  closesAt?: string
 }
 
 // type TrailData = {
@@ -70,12 +70,18 @@ const StatusIcon = ({ isOpen, className, size = "large" }: { isOpen: boolean; cl
 }
 
 const OpeningTimes = ({ isOpen, opensAt, closesAt }: { isOpen: boolean; opensAt?: string; closesAt?: string }) => {
-  if (!isOpen && opensAt && closesAt) {
-    return <span className="text-sm mt-2 text-electric-green">{opensAt} - {closesAt}</span>
-  } else if (!isOpen && opensAt) {
-    return <span className="text-sm mt-2 text-electric-green">Opens at {opensAt}</span>
+  let children = []
+  if (!isOpen) {
+    if (opensAt && closesAt) {
+      children.push(<span key="closesAt" className="text-sm text-electric-red">Closes at {opensAt}</span>)
+      children.push(<span key="opensAt" className="text-sm text-electric-green">Opens at {closesAt}</span>)
+    } else if (opensAt) {
+      children.push(<span key="opensAt" className="text-sm text-electric-green">Opens at {opensAt}</span>)
+    } else if (closesAt) {
+      children.push(<span key="closesAt" className="text-sm text-electric-red">Closes at {closesAt}</span>)
+    }
   }
-  return null
+  return <div className="flex flex-col font-semibold space-y-2">{children}</div>
 }
 
 export default function Page() {
@@ -90,8 +96,8 @@ export default function Page() {
       const weekData = sortedDates.map(date => ({
         date,
         isOpen: trailData.data[date].isOpen,
-        opensAt: trailData.data[date].conditions?.opensAt ?? null,
-        closesAt: trailData.data[date].conditions?.closesAt ?? null
+        opensAt: trailData.data[date].conditions?.opensAt ?? undefined,
+        closesAt: trailData.data[date].conditions?.closesAt ?? undefined
       }))
       setWeekStatus(weekData)
 
@@ -157,10 +163,12 @@ export default function Page() {
             >
               <Card className={`bg-[#0f4700] border ${day.isOpen ? "border-electric-green" : "border-electric-red"}`}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg text-white">{getDayLabel(day.date, index + 2)}</CardTitle>
+                  <CardTitle className="text-lg text-white" onClick={() => {
+                    console.log(day)
+                  }}>{getDayLabel(day.date, index + 2)}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-end justify-between">
                     <div className="flex items-center space-x-2">
                       <StatusIcon isOpen={day.isOpen} size="small" />
                       <span className={`font-semibold ${day.isOpen ? "text-electric-green" : "text-electric-red"}`}>

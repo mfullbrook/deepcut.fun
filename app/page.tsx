@@ -48,9 +48,9 @@ async function fetchTrailData(): Promise<TrailData> {
   const response = await fetch(DATA_URL)
   const data: TrailData = await response.json()
 
-  const midnight = new Date()
-  midnight.setUTCHours(24, 0, 0, 0)
-  localStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: midnight.toISOString() }))
+  const twoAm = new Date()
+  twoAm.setUTCHours(2, 0, 0, 0)
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: twoAm.toISOString() }))
 
   return data
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format, parseISO, isBefore } from "date-fns"
+import { format, parseISO, isBefore, formatDistanceToNow } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThumbsUp, Lock } from "lucide-react"
 import { Galindo } from 'next/font/google'
@@ -81,6 +81,7 @@ const OpeningTimes = ({ isOpen, opensAt, closesAt }: { isOpen: boolean; opensAt?
 export default function Page() {
   const [weekStatus, setWeekStatus] = useState<DayStatus[]>([])
   const [showAll, setShowAll] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<string>("")
 
   useEffect(() => {
     async function loadData() {
@@ -93,6 +94,16 @@ export default function Page() {
         closesAt: trailData.data[date].conditions?.closesAt ?? null
       }))
       setWeekStatus(weekData)
+
+      if (trailData.retrievedAt) {
+        const retrievedDate = new Date(trailData.retrievedAt)
+        const timeString = retrievedDate.toLocaleTimeString('en-GB', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }).toLowerCase()
+        setLastUpdated(`(updated ${formatDistanceToNow(retrievedDate, { addSuffix: true })})`)
+      }
     }
 
     loadData()
@@ -112,7 +123,10 @@ export default function Page() {
         <h1 className={`${galindo.className} text-4xl tracking-wider font-bold text-center mb-2 text-white`}>
           Deepcut Trail Status
         </h1>
-        <p className="text-center font-semibold text-electric-green">MoD Data - Aldershot Training Area G2</p>
+        <p className="text-center font-semibold text-electric-green">
+          MoD Data - Aldershot Training Area G2 {" "}
+          <span className="text-sm font-normal md:inline block">{lastUpdated}</span>
+        </p>
       </header>
       <main>
         <div className="grid grid-cols-2 gap-4 mb-8">

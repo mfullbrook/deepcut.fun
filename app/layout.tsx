@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react"
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { ReactNode } from "react";
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${nunito.variable} font-nunito tracking-wide antialiased`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );

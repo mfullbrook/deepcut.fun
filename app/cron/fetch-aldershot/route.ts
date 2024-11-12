@@ -4,7 +4,7 @@ import { storeClosureTimes } from '@/services/closureTimesStorage';
 import { secure } from '@/lib/secure';
 
 // Using the secure wrapper with the new route handler format
-export const POST = secure(async () => {
+export const GET = secure(async () => {
   try {
     // Fetch the closure times data
     const data = await fetchAllClosureTimes();
@@ -20,4 +20,4 @@ export const POST = secure(async () => {
       { status: 500 }
     );
   }
-}); 
+});

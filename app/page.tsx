@@ -7,6 +7,7 @@ import { ThumbsUp, Lock } from "lucide-react"
 import { Galindo } from 'next/font/google'
 import { motion } from "framer-motion"
 import { SiGithub } from "@icons-pack/react-simple-icons"
+import { StoredClosureData } from "@/lib/types"
 
 
 const galindo = Galindo({
@@ -17,26 +18,29 @@ const galindo = Galindo({
 type DayStatus = {
   date: string
   isOpen: boolean
-  opensAt?: string
-  closesAt?: string
+  opensAt: string | null
+  closesAt: string | null
 }
 
-type TrailData = {
-  [date: string]: {
-    isOpen: boolean
-    conditions: {
-      raw: string
-      opensAt: string
-      closesAt: string
-    }
-    rawText: string
-  }
-}
+// type TrailData = {
+//   [date: string]: {
+//     isOpen: boolean
+//     conditions: {
+//       raw: string
+//       opensAt: string
+//       closesAt: string
+//     }
+//     rawText: string
+//   }
+// }
 
 const DATA_URL = "https://a1jaotnvc8xv5m0n.public.blob.vercel-storage.com/aldershotTrainingAreaData.json"
 const CACHE_KEY = "deepcutTrailData"
 
-async function fetchTrailData(): Promise<TrailData> {
+/**
+ * Fetch the data from the Vercel Blob and cache it until 2am
+ */
+async function fetchData(): Promise<StoredClosureData> {
   const cachedData = localStorage.getItem(CACHE_KEY)
   if (cachedData) {
     const { data, expiry } = JSON.parse(cachedData)
@@ -46,7 +50,7 @@ async function fetchTrailData(): Promise<TrailData> {
   }
 
   const response = await fetch(DATA_URL)
-  const data: TrailData = await response.json()
+  const data: StoredClosureData = await response.json()
 
   const twoAm = new Date()
   twoAm.setUTCHours(2, 0, 0, 0)
@@ -80,13 +84,13 @@ export default function Page() {
 
   useEffect(() => {
     async function loadData() {
-      const trailData = await fetchTrailData()
-      const sortedDates = Object.keys(trailData).sort()
+      const trailData = await fetchData()
+      const sortedDates = Object.keys(trailData.data).sort()
       const weekData = sortedDates.map(date => ({
         date,
-        isOpen: trailData[date].isOpen,
-        opensAt: trailData[date].conditions?.opensAt,
-        closesAt: trailData[date].conditions?.closesAt
+        isOpen: trailData.data[date].isOpen,
+        opensAt: trailData.data[date].conditions?.opensAt ?? null,
+        closesAt: trailData.data[date].conditions?.closesAt ?? null
       }))
       setWeekStatus(weekData)
     }
